@@ -19,30 +19,17 @@
 *.md
 *.png
 *.sh
-*.toml
 *.yaml
 *.zip
 *.iml
 .*
-/agones
 /benches
 /build
 /docs
 /examples
-/macros
-/proto
 /sdks
-/src
 /tests
-target/debug
-target/release
-target/**.d
-target/*/*/build
-target/*/*/deps
-target/*/*/incremental
-target/criterion
-target/doc
-target/tmp
+/target
 
 # windows files
 *.exe
