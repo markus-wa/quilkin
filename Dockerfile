@@ -18,4 +18,4 @@ RUN cargo build --release --bin quilkin
 FROM debian:bookworm-slim AS runtime
 WORKDIR app
 COPY --from=builder /app/target/release/quilkin /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/quilkin"]
+ENTRYPOINT ["/usr/local/bin/quilkin", "run"]

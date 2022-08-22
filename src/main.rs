@@ -192,5 +192,5 @@ fn read_config(path: &PathBuf) -> Config {
         })
         .map_err(eyre::Error::from)
         .and_then(|file| quilkin::Config::from_reader(file).map_err(From::from))
-        .unwrap()
+        .unwrap_or_default()
 }

@@ -142,6 +142,10 @@ pub use xds::*;
 pub async fn manage(config: std::sync::Arc<crate::Config>) -> crate::Result<()> {
     let port = config.proxy.load().port;
 
+    if config.admin.is_some() {
+        tokio::spawn(crate::admin::server(config.clone()));
+    }
+
     let server = AggregatedDiscoveryServiceServer::new(ControlPlane::from_arc(config));
     let server = tonic::transport::Server::builder().add_service(server);
     tracing::info!("Serving management server at {}", port);

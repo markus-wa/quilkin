@@ -116,7 +116,7 @@ impl Watcher {
                 }
 
                 let endpoint = Endpoint::try_from(server)?;
-                tracing::trace!(?endpoint, "Adding endpoint");
+                tracing::trace!(%endpoint.address, endpoint.metadata=%serde_json::to_value(&endpoint).unwrap(), "adding endpoint");
                 self.config.clusters.modify(|clusters| {
                     clusters.default_cluster_mut().push(endpoint.clone());
                 });
@@ -128,7 +128,7 @@ impl Watcher {
                     .filter(GameServer::is_allocated)
                     .collect();
                 let endpoints = LocalityEndpoints::try_from(servers)?;
-                tracing::trace!(?endpoints, "Restarting with endpoints");
+                tracing::trace!(endpoints=%serde_json::to_value(&endpoints).unwrap(), "restarting with endpoints");
                 self.config
                     .clusters
                     .store(Arc::new(ClusterMap::new_with_default_cluster(endpoints)));
@@ -140,7 +140,7 @@ impl Watcher {
                 }
 
                 let endpoint = Endpoint::try_from(server)?;
-                tracing::trace!(?endpoint, "Deleting endpoint");
+                tracing::trace!(%endpoint.address, endpoint.metadata=%serde_json::to_value(&endpoint).unwrap(), "deleting endpoint");
                 self.config.clusters.modify(|clusters| {
                     for locality in &mut clusters.default_cluster_mut().localities {
                         locality.remove(&endpoint);
