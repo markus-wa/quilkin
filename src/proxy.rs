@@ -243,7 +243,7 @@ impl Proxy {
     ) {
         let clusters = args.config.clusters.load();
 
-        tracing::trace!(?clusters, "Clusters available");
+        tracing::trace!(clusters=%serde_json::to_value(&clusters).unwrap(), "Clusters available");
 
         let endpoints: Vec<_> = clusters.endpoints().collect();
         if endpoints.is_empty() {
