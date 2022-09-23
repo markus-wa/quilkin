@@ -184,6 +184,7 @@ impl ControlPlane {
             loop {
                 tokio::select! {
                     _ = rx.changed() => {
+                        tracing::trace!(%node.id, %resource_type, "sending update to current subscribers");
                         yield this.discovery_response(&node.id, resource_type, &message.resource_names).map(|response| {
                             pending_acks.cache_set(response.nonce.clone(), ());
                             response
