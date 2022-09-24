@@ -106,7 +106,7 @@ impl ControlPlane {
         watchers
             .version
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        tracing::trace!(%resource_type, "pushing update");
+        tracing::trace!(%resource_type, watchers=watchers.sender.receiver_count(), "pushing update");
         let _ = watchers.sender.send(());
     }
 
