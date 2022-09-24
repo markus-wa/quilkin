@@ -169,7 +169,7 @@ impl ControlPlane {
         let rx = self.watchers[resource_type].sender.subscribe();
         let mut pending_acks = cached::TimedCache::with_lifespan(1);
         let this = Self::clone(self);
-        let response = this.discovery_response(&node.id, resource_type, &message.resource_names)?;
+        let response = this.discovery_response(&node.id, resource_type, &message.resource_names).unwrap();
         pending_acks.cache_set(response.nonce.clone(), ());
 
         Ok(Box::pin(async_stream::try_stream! {
@@ -184,7 +184,7 @@ impl ControlPlane {
                         yield this.discovery_response(&node.id, resource_type, &message.resource_names).map(|response| {
                             pending_acks.cache_set(response.nonce.clone(), ());
                             response
-                        })?;
+                        }).unwrap();
                     }
                     new_message = streaming.next() => {
                         let new_message = match new_message.transpose() {
@@ -225,7 +225,7 @@ impl ControlPlane {
                         yield this.discovery_response(id, resource_type, &message.resource_names).map(|response| {
                             pending_acks.cache_set(response.nonce.clone(), ());
                             response
-                        })?;
+                        }).unwrap();
                     }
                 }
 
