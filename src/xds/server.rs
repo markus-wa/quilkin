@@ -205,7 +205,7 @@ impl ControlPlane {
                             }
                         };
 
-                        tracing::trace!(%id, %resource_type, "new request");
+                        tracing::trace!("new request");
                         metrics::DISCOVERY_REQUESTS.with_label_values(&[id, resource_type.type_url()]).inc();
 
                         if let Some(error) = &new_message.error_detail {
@@ -228,10 +228,10 @@ impl ControlPlane {
                         }).unwrap();
                     }
                 }
-
-                tracing::info!("terminating stream");
             }
-        }.instrument(tracing::info_span!("xds_stream", %node.id))))
+
+            tracing::info!("terminating stream");
+        }.instrument(tracing::info_span!("xds_stream", %node.id, %resource_type))))
     }
 }
 
