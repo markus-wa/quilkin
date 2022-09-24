@@ -196,12 +196,15 @@ impl Stream {
                             "Received response"
                         );
 
+                        tracing::trace!(?response, "full response");
+
                         let result = response
                             .resources
                             .iter()
                             .cloned()
                             .map(Resource::try_from)
                             .try_for_each(|resource| {
+                                tracing::trace!(?resource, "attempting to decode response");
                                 let resource = resource?;
                                 metrics::DISCOVERY_RESPONSES
                                     .with_label_values(&[&*identifier, resource.type_url()])
