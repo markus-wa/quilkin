@@ -53,10 +53,18 @@ pub struct ControlPlane {
     watchers: Arc<crate::xds::resource::ResourceMap<Watchers>>,
 }
 
-#[derive(Default)]
 struct Watchers {
-    channels: parking_lot::Mutex<Vec<tokio::sync::watch::Sender<()>>>,
+    sender: tokio::sync::watch::Sender<()>,
     version: std::sync::atomic::AtomicU64,
+}
+
+impl Default for Watchers {
+    fn default() -> Self {
+        Self {
+            sender: tokio::sync::watch::channel(()).0,
+            version: <_>::default(),
+        }
+    }
 }
 
 impl ControlPlane {
@@ -98,19 +106,8 @@ impl ControlPlane {
         watchers
             .version
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        let mut channels = watchers.channels.lock();
-        tracing::trace!(%resource_type, watchers = channels.len(), "pushing update");
-        let mut i = 0;
-        while i < channels.len() {
-            if channels[i].send(()).is_err() {
-                tracing::trace!("removing channel");
-                channels.swap_remove(i);
-                i = i.saturating_sub(1);
-            } else {
-                tracing::trace!("sending channel update");
-                i += 1;
-            }
-        }
+        tracing::trace!(%resource_type, "pushing update");
+        let _ = watchers.sender.send(());
     }
 
     fn discovery_response(
@@ -169,13 +166,7 @@ impl ControlPlane {
         metrics::DISCOVERY_REQUESTS
             .with_label_values(&[&*node.id, resource_type.type_url()])
             .inc();
-        let (tx, rx) = tokio::sync::watch::channel(());
-        {
-            let mut channels = self.watchers[resource_type].channels.lock();
-            let old = channels.len();
-            channels.push(tx);
-            tracing::trace!(old_watchers=old, new_watchers=channels.len(), "adding watcher");
-        }
+        let rx = self.watchers[resource_type].sender.subscribe();
         let mut pending_acks = cached::TimedCache::with_lifespan(1);
         let this = Self::clone(self);
         let response = this.discovery_response(&node.id, resource_type, &message.resource_names)?;
