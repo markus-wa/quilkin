@@ -170,7 +170,12 @@ impl ControlPlane {
             .with_label_values(&[&*node.id, resource_type.type_url()])
             .inc();
         let (tx, rx) = tokio::sync::watch::channel(());
-        self.watchers[resource_type].channels.lock().push(tx);
+        {
+            let mut channels = self.watchers[resource_type].channels.lock();
+            let old = channels.len();
+            channels.push(tx);
+            tracing::trace!(old_watchers=old, new_watchers=channels.len(), "adding watcher");
+        }
         let mut pending_acks = cached::TimedCache::with_lifespan(1);
         let this = Self::clone(self);
         let response = this.discovery_response(&node.id, resource_type, &message.resource_names)?;
