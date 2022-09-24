@@ -200,7 +200,7 @@ impl ControlPlane {
                             }
                         };
 
-                        let id = new_message.node.as_ref().map(|node| &*node.id).unwrap_or_default();
+                        let id = new_message.node.as_ref().map(|node| &*node.id).unwrap_or(&*node.id);
                         let resource_type = match new_message.type_url.parse::<ResourceType>() {
                             Ok(value) => value,
                             Err(error) => {
