@@ -19,7 +19,7 @@ use std::{pin::Pin, sync::Arc};
 use cached::Cached;
 use futures::Stream;
 use tokio_stream::StreamExt;
-use tracing::Instrument;
+use tracing_futures::Instrument;
 
 use crate::{
     config::Config,
@@ -166,16 +166,16 @@ impl ControlPlane {
         metrics::DISCOVERY_REQUESTS
             .with_label_values(&[&*node.id, resource_type.type_url()])
             .inc();
-        let rx = self.watchers[resource_type].sender.subscribe();
+        let mut rx = self.watchers[resource_type].sender.subscribe();
         let mut pending_acks = cached::TimedCache::with_lifespan(1);
         let this = Self::clone(self);
         let response = this.discovery_response(&node.id, resource_type, &message.resource_names).unwrap();
         pending_acks.cache_set(response.nonce.clone(), ());
 
+        let node_ = node.clone();
         Ok(Box::pin(async_stream::try_stream! {
             yield response;
-            tokio::pin!(rx);
-            tokio::pin!(streaming);
+            let node = node_;
 
             loop {
                 tokio::select! {
@@ -229,8 +229,9 @@ impl ControlPlane {
                     }
                 }
 
+                tracing::info!("terminating stream");
             }
-        }))
+        }.instrument(tracing::info_span!("xds_stream", %node.id))))
     }
 }
 
