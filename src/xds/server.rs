@@ -165,7 +165,7 @@ impl ControlPlane {
 
         let node = message.node.clone().unwrap();
         let resource_type: ResourceType = message.type_url.parse()?;
-        tracing::trace!(id = %node.id, %resource_type, "new request");
+        tracing::trace!(id = %node.id, %resource_type, "initial request");
         metrics::DISCOVERY_REQUESTS
             .with_label_values(&[&*node.id, resource_type.type_url()])
             .inc();
@@ -226,7 +226,7 @@ impl ControlPlane {
                             }
                         }
 
-                        yield this.discovery_response(&node.id, resource_type, &message.resource_names).map(|response| {
+                        yield this.discovery_response(id, resource_type, &message.resource_names).map(|response| {
                             pending_acks.cache_set(response.nonce.clone(), ());
                             response
                         })?;
